@@ -1,0 +1,7 @@
+package apriori;
+
+/**
+ * Created by mingwei on 5/1/14.
+ */
+public class Apriori {
+}
