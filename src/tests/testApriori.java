@@ -21,7 +21,7 @@ public class testApriori {
 
 
     public static void main(String[] args) throws IOException {
-        Apriori apr = new Apriori(0.01, 0.8);
+        Apriori apr = new Apriori(0.001, 0.2);
         apr.mine("data/FoodMart.csv");
     }
 }

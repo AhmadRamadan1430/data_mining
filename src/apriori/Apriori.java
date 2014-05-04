@@ -1,6 +1,11 @@
 package apriori;
 
 import au.com.bytecode.opencsv.CSVReader;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.apache.commons.lang3.tuple.Triple;
+import org.paukov.combinatorics.Factory;
+import org.paukov.combinatorics.Generator;
+import org.paukov.combinatorics.ICombinatoricsVector;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -56,7 +61,60 @@ public class Apriori {
         this.readInputFile(filename);
         this.oneItemFrequency();
         this.findFrequentSets();
+        this.generateRules();
         p(fieldCount);
+    }
+
+    private void generateRules() {
+
+        List<Triple<Set<Integer>, Set<Integer>, Double>> rules = new ArrayList<Triple<Set<Integer>, Set<Integer>, Double>>();
+        for (Map.Entry<Integer, Set<Set<Integer>>> entry : resultMap.entrySet()) {
+            if (entry.getKey() == 1)
+                continue;
+            for (Set<Integer> idset : entry.getValue()) {
+                // get support for the whole set.
+                int support_whole = getSupport(idset);
+                // generate subsets
+                ICombinatoricsVector<Integer> initialSet = Factory.createVector(new ArrayList<Integer>(idset));
+                Generator<Integer> gen = Factory.createSubSetGenerator(initialSet);
+                // loop through every subset
+                for (ICombinatoricsVector<Integer> subSet : gen) {
+                    if (subSet.getSize() != 0 && subSet.getSize() != entry.getKey()) {
+//                        System.out.println(subSet);
+
+                        Set<Integer> subset1 = new HashSet<Integer>();
+                        subset1.addAll(subSet.getVector());
+
+                        Set<Integer> subset2 = new HashSet<Integer>(idset);
+                        subset2.removeAll(subset1);
+
+                        int support_sub = getSupport(subset1);
+
+                        double confidence = (double) support_whole / support_sub;
+
+                        if (confidence > this.confidence) {
+                            rules.add(new ImmutableTriple(subset1, subset2, confidence));
+                            p("%s : %s [%d/%d = %.2f]\n", subset1.toString(), subset2.toString(), support_whole, support_sub, confidence);
+                        }
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    private int getSupport(Set<Integer> set) {
+        int support = 0;
+        for (String[] strList : this.data) {
+            boolean contains = true;
+            for (int i : set)
+                if (strList[i].equals("0"))
+                    contains = false;
+            if (contains)
+                support++;
+        }
+        return support;
     }
 
     /**
