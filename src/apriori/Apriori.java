@@ -62,9 +62,34 @@ public class Apriori {
         this.oneItemFrequency();
         this.findFrequentSets();
         this.generateRules();
+        this.findNegativePatterns();
         p(fieldCount);
     }
 
+    private void findNegativePatterns() {
+        List<Set<Integer>> mixed = new ArrayList<Set<Integer>>();
+        List<Triple<Set<Integer>, Set<Integer>, Double>> npatterns = new ArrayList<Triple<Set<Integer>, Set<Integer>, Double>>();
+
+        for (int x : resultMap.keySet()) {
+            for (Set<Integer> s : resultMap.get(x))
+                mixed.add(s);
+        }
+
+        for (int i = 0; i < mixed.size(); i++) {
+            double support_i = (float) getSupport(mixed.get(i)) / data.size();
+            for (int j = 1; j < mixed.size(); j++) {
+                double support_j = (float) getSupport(mixed.get(j)) / data.size();
+                Set<Integer> combined = new HashSet<Integer>(mixed.get(i));
+                combined.addAll(mixed.get(j));
+                double support_ij = (float) getSupport(combined) / data.size();
+                double calculation = (support_ij / support_i + support_ij / support_j) / 2;
+                if (calculation < 0.01) {
+                    npatterns.add(new ImmutableTriple<Set<Integer>, Set<Integer>, Double>(mixed.get(i), mixed.get(j), calculation));
+                    p("NP: %s : %s [%.2f]\n", mixed.get(i).toString(), mixed.get(j).toString(), calculation);
+                }
+            }
+        }
+    }
     private void generateRules() {
 
         List<Triple<Set<Integer>, Set<Integer>, Double>> rules = new ArrayList<Triple<Set<Integer>, Set<Integer>, Double>>();
